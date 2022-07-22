@@ -1,6 +1,15 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "edge.cuh"
+#include "cuda_runtime.h"
+
+
+
+
 int main(int argc, char *argv[])
 {
 #if defined(Q_OS_WIN)
