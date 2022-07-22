@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/new/prefix1">
+        <file>Resources/gear-solid.svg</file>
+        <file>Resources/arrow-right-from-bracket-solid.svg</file>
+        <file>Resources/compress-solid.svg</file>
+        <file>Resources/floppy-disk-solid.svg</file>
+        <file>Resources/folder-closed-regular.svg</file>
+        <file>Resources/folder-open-regular.svg</file>
+        <file>Resources/maximize-solid.svg</file>
+        <file>Resources/square-regular.svg</file>
+    </qresource>
+</RCC>

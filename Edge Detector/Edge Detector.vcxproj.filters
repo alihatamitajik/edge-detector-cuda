@@ -3,15 +3,17 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="panel.cpp" />
+    <ClCompile Include="EdgeDetector.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="qml.qrc" />
+    <QtRcc Include="Resource.qrc" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="edge.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="edge.cuh" />
+    <ClInclude Include="EdgeDetector.h" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="panel.h" />

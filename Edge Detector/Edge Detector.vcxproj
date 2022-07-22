@@ -94,12 +94,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="EdgeDetector.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="panel.cpp" />
-    <QtRcc Include="qml.qrc" />
+    <QtRcc Include="Resource.qrc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="edge.cuh" />
+    <ClInclude Include="EdgeDetector.h" />
     <QtMoc Include="panel.h" />
   </ItemGroup>
   <ItemGroup>
