@@ -14,11 +14,21 @@ public:
 	~Panel();
 
 public slots:
-	void open_file_chooser();
+	void openHandler();
+	void setThresholdValue(int);
+	void setBrightnessValue(int);
+	void compute();
 
 private:
 	Ui::PanelClass ui;
 	EdgeDetector detector;
 	bool isOpened;
 	bool isProcessed;
+	bool recentSaved;
+
+
+	void resetSliders();
+	void openFileChooser();
+	void disableAll();
+	void enableAll();
 };

@@ -9,7 +9,7 @@
     <QtRcc Include="Resource.qrc" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="edge.cu" />
+    <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="edge.cuh" />

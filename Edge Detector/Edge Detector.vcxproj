@@ -109,7 +109,7 @@
     <QtMoc Include="panel.h" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="edge.cu" />
+    <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="panel.ui" />
