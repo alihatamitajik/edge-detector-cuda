@@ -17,14 +17,13 @@ public:
 	void openFile(String);
 	QPixmap getQPix();
 	void clear();
+	String getSizeStr();
+	String getDimensionStr();
 
 private:
 	Mat img;
 	uint8_t* input;
 	uint8_t* bright;
 	uint8_t* edges;
-	QPixmap input_pix;
-	QPixmap bright_pix;
-	QPixmap edge_pix;
 };
 

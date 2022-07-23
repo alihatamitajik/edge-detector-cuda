@@ -6,6 +6,7 @@ void setLabelPictureScaled(QLabel*, QPixmap);
 Panel::Panel(QWidget *parent)
 	: QMainWindow(parent)
 {
+	setFixedSize(1280, 720);
 	detector = EdgeDetector();
 	ui.setupUi(this);
 	connect(ui.actionOpen, SIGNAL(triggered()), this, SLOT(open_file_chooser()));
@@ -29,6 +30,8 @@ void Panel::open_file_chooser() {
 		detector.openFile(filename.toStdString());
 		setLabelPictureScaled(ui.input, detector.getQPix());
 		isOpened = true;
+		ui.imageDim->setText(QString::fromStdString(detector.getDimensionStr()));
+		ui.imageSize->setText(QString::fromStdString(detector.getSizeStr()));
 	}
 	else {
 		// Do Nothing

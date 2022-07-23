@@ -15,3 +15,14 @@
         fprintf(stderr, __VA_ARGS__); \
         goto Error; \
     } 
+
+
+// One implementation of naive covolution
+
+
+// One convoloution with shared data
+
+
+
+
+// One convolution with handwriten sobel
