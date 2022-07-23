@@ -70,6 +70,9 @@
       <LanguageStandard>$(Qt_STDCPP_)</LanguageStandard>
       <AdditionalIncludeDirectories>C:\libs\fmt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <CudaCompile>
+      <AdditionalOptions>-use_fast_math %(AdditionalOptions)</AdditionalOptions>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'" Label="Configuration">
     <ClCompile>

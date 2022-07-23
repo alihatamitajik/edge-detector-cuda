@@ -36,6 +36,15 @@ QPixmap EdgeDetector::getBrightnessPix() {
 	));
 }
 
+QPixmap EdgeDetector::getEdgePix() {
+	return QPixmap::fromImage(QImage(edges,
+		img.cols,
+		img.rows,
+		img.step,
+		QImage::Format_Grayscale8
+	));
+}
+
 void EdgeDetector::clear() {
 	/* TODO */
 	img.release();

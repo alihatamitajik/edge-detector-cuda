@@ -84,6 +84,7 @@ void Panel::compute() {
 	if (stat.e == DetectorErrors::SUCCESS) {
 		// set brightness image
 		setLabelPictureScaled(ui.modified, detector.getBrightnessPix());
+		setLabelPictureScaled(ui.edges, detector.getEdgePix());
 	}
 	ui.statusBar->clearMessage();
 }

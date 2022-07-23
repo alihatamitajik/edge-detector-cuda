@@ -43,6 +43,7 @@ public:
 	void openFile(std::string);
 	QPixmap getQPix();
 	QPixmap getBrightnessPix();
+	QPixmap getEdgePix();
 	void clear();
 	std::string getSizeStr();
 	std::string getDimensionStr();
