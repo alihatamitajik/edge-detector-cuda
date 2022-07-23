@@ -46,9 +46,10 @@ QPixmap EdgeDetector::getEdgePix() {
 }
 
 void EdgeDetector::clear() {
-	/* TODO */
+	if (img.data != input) {
+		free(input);
+	}
 	img.release();
-	free(input);
 	free(bright);
 	free(edges);
 }

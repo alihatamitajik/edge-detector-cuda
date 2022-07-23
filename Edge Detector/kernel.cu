@@ -3,12 +3,11 @@
 constexpr auto BLOCK_SIZE = 1024;
 constexpr auto BLOCK_DIM = 32;
 
-#define ASSERT(exp, ...) cudaStatus = exp; \
+#define checkGpuError(exp) cudaStatus = exp; \
     if (cudaStatus != cudaSuccess) { \
-        fprintf(stderr, __VA_ARGS__); \
+        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(cudaStatus), __FILE__, __LINE__); \
         goto Error; \
     } 
-
 
 __global__ void changeBrightnessCUDA(uint8_t* input, const int width, 
     const int height, const int brightness)
@@ -104,28 +103,21 @@ cudaError_t naiveSobel(uint8_t* dev_input, uint8_t* dev_edge,
     int8_t* dev_yK;
     size_t kernelSize = 3 * 3 * sizeof(int8_t);
 
-    ASSERT(cudaMalloc((void**)&dev_xK, kernelSize),
-        "CudaMalloc Error: Can't allocate dev_input!");
+    checkGpuError(cudaMalloc((void**)&dev_xK, kernelSize));
 
-    ASSERT(cudaMalloc((void**)&dev_yK, kernelSize),
-        "CudaMalloc Error: Can't allocate dev_input!");
+    checkGpuError(cudaMalloc((void**)&dev_yK, kernelSize));
 
-    ASSERT(cudaMemcpy(dev_xK, xKernel, kernelSize, cudaMemcpyHostToDevice),
-        "Memcpy Error for xKernel");
+    checkGpuError(cudaMemcpy(dev_xK, xKernel, kernelSize, cudaMemcpyHostToDevice));
 
-    ASSERT(cudaMemcpy(dev_yK, yKernel, kernelSize, cudaMemcpyHostToDevice),
-        "Memcpy Error for yKernel");
+    checkGpuError(cudaMemcpy(dev_yK, yKernel, kernelSize, cudaMemcpyHostToDevice));
 
     sobelCUDA<<<grid, block>>>(dev_input, dev_xK, dev_yK, dev_edge,
         width, height, 3, threshold);
 
-    ASSERT(cudaGetLastError(),
-        "sobelCUDA kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+    checkGpuError(cudaGetLastError());
 
     // Wait untill Data is ready
-    ASSERT(cudaDeviceSynchronize(),
-        "cudaDeviceSynchronize returned error code %d after launching sobelCUDA!\n"
-        , cudaStatus);
+    checkGpuError(cudaDeviceSynchronize());
 
 Error:
     cudaFree(xKernel);
@@ -138,11 +130,72 @@ Error:
  * 
  * In this implementation, we use the properties of the algorithm (make use of 
  * zeros in the filters, Loop unrowling, using subtraction instead of "*-1" and
- * reducing kernel launches.
+ * reducing kernel launches. Also we will access the memory way less with shared
+ * data and also helps the bandwidth.
  * 
  * The above strategies boosts the performance of the code!
  * 
  */
+
+__global__ void sobelOptimizedCUDA(const uint8_t* image, uint8_t* output,
+    int width, int height, int threshold)
+{
+    int i = blockIdx.y * blockDim.y + threadIdx.y;
+    int j = blockIdx.x * blockDim.x + threadIdx.x;
+    int idx = i * width + j;
+    int out;
+    float S1, S2;
+
+    __shared__ uint8_t sdata[34][34];
+    if (i < height && j < width) {
+        // Main data
+        sdata[threadIdx.y + 1][threadIdx.x + 1] = image[idx];
+        
+        // Boudnries
+        if (threadIdx.y == 0 && blockIdx.y != 0) {
+            sdata[0][threadIdx.x + 1] = image[(i - 1) * width + j];
+            if (threadIdx.x == 0 && blockIdx.x != 0) {
+                sdata[0][0] = image[(i - 1) * width + (j-1)];
+            }
+        }
+        else if (threadIdx.x == 0 && blockIdx.x != 0) {
+            sdata[threadIdx.y + 1][0] = image[(i) * width + j - 1];
+            if (threadIdx.y == 31 && i != height - 1) {
+                sdata[33][0] = image[(i + 1) * width + j - 1];
+            }
+        }
+        else if (threadIdx.y == 31 && i != height - 1) {
+            sdata[33][threadIdx.x + 1] = image[((i + 1) * width + j)];
+            if (threadIdx.x == 31 && j != width - 1) {
+                sdata[33][33] = image[(i + 1) * width + j + 1];
+            }
+        }
+        else if (threadIdx.x == 31 && j != width - 1) {
+            sdata[threadIdx.y + 1][33] = image[i * width + j + 1];
+            if (threadIdx.y == 0 && blockIdx.y != 0) {
+                sdata[0][33] = image[(i - 1) * width + j + 1];
+            }
+        }
+    }
+    // waits untill shared data is completed
+    __syncthreads();
+
+    if (i >= 1 && j >= 1 &&
+        i < height - 1 && j < width - 1)
+    { 
+        S1 = sdata[threadIdx.y][threadIdx.x + 2] - sdata[threadIdx.y][threadIdx.x]
+            + 2 * (sdata[threadIdx.y + 1][threadIdx.x + 2] - sdata[threadIdx.y + 1][threadIdx.x])
+            + sdata[threadIdx.y + 2][threadIdx.x + 2] - sdata[threadIdx.y + 2][threadIdx.x];
+
+        S2 = sdata[threadIdx.y + 2][threadIdx.x + 2] + sdata[threadIdx.y + 2][threadIdx.x] 
+            + 2 * (sdata[threadIdx.y + 2][threadIdx.x + 1] - sdata[threadIdx.y][threadIdx.x + 1])
+            - sdata[threadIdx.y][threadIdx.x + 2] - sdata[threadIdx.y][threadIdx.x];
+
+
+        out = sqrtf(S1 * S1 + S2 * S2);
+        output[idx] = out > threshold ? out : 0;
+    }
+}
 
 
 __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t * edge,
@@ -153,42 +206,34 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
     uint8_t* dev_edge;
     size_t imageSize = width * height * sizeof(uint8_t);
     dim3 block(BLOCK_DIM, BLOCK_DIM);
-    dim3 grid(width/BLOCK_DIM + 1, height/BLOCK_DIM + 1);
+    dim3 grid(width/BLOCK_DIM + (width%BLOCK_DIM!=0), 
+        height/BLOCK_DIM + (width % BLOCK_DIM != 0));
 
     // Choose which GPU to run on, change this on a multi-GPU system.
-    ASSERT(cudaSetDevice(0),
-        "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?");
+    checkGpuError(cudaSetDevice(0));
 
-    ASSERT(cudaMalloc((void**)&dev_input, imageSize),
-        "CudaMalloc Error: Can't allocate dev_input!");
+    checkGpuError(cudaMalloc((void**)&dev_input, imageSize));
 
-    ASSERT(cudaMalloc((void**)&dev_edge, imageSize),
-        "CudaMalloc Error: Can't allocate dev_edge!");
+    checkGpuError(cudaMalloc((void**)&dev_edge, imageSize));
 
-    ASSERT(cudaMemcpy(dev_input, input, imageSize, cudaMemcpyHostToDevice),
-        "CudaMemcpy Error: Can't copy input to dev_input!");
+    checkGpuError(cudaMemcpy(dev_input, input, imageSize, cudaMemcpyHostToDevice));
 
 
     changeBrightnessCUDA <<<grid, block>>> (dev_input, width, height, brightness);
-    ASSERT(cudaGetLastError(),
-        "changeBrightnessCUDA kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-
-    // Wait untill Data is ready
-    ASSERT(cudaDeviceSynchronize(),
-        "cudaDeviceSynchronize returned error code %d after launching changeBrightnessCUDA!\n"
-        , cudaStatus);
-
-    ASSERT(cudaMemcpyAsync(bright, dev_input, imageSize, cudaMemcpyDeviceToHost),
-        "CudaMemcpy Async Error: Can't copy brightness-changes input to host!");
+    checkGpuError(cudaGetLastError());
+    checkGpuError(cudaDeviceSynchronize());
 
 
-    ASSERT(naiveSobel(dev_input, dev_edge, width, height, threshold),
-        "Naive Sobel Failed");
+    checkGpuError(cudaMemcpyAsync(bright, dev_input, imageSize, cudaMemcpyDeviceToHost));
 
 
-    ASSERT(cudaMemcpy(edge, dev_edge, imageSize, cudaMemcpyDeviceToHost),
-        "CudaMemcpy Async Error: Can't copy brightness-changes input to host!");
+    /*checkGpuError(naiveSobel(dev_input, dev_edge, width, height, threshold));*/
 
+    sobelOptimizedCUDA <<<grid, block>>> (dev_input, dev_edge, width, height, threshold);
+    checkGpuError(cudaGetLastError());
+    checkGpuError(cudaDeviceSynchronize());
+
+    checkGpuError(cudaMemcpy(edge, dev_edge, imageSize, cudaMemcpyDeviceToHost));
 
 Error:
     cudaFree(dev_input);
