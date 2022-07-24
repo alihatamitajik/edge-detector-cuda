@@ -207,6 +207,16 @@ __global__ void sobelOptimizedShCUDA(const uint8_t* image, uint8_t* output,
     // waits untill shared data is completed
     __syncthreads();
 
+    if (idx == 0) {
+        for (int ii = 0; ii < 33; ii++) {
+            for (int jj = 0; jj < 33; jj++) {
+                if (sdata[ii + 1][jj + 1] != image[ii * width + jj]) {
+                    printf("%d, %d::%d, %d\n", blockIdx.x, blockIdx.y, ii, jj);
+                }
+            }
+        }
+    }
+
     if (i >= 1 && j >= 1 &&
         i < height - 1 && j < width - 1)
     { 
