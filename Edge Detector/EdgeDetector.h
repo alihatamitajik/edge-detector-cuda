@@ -9,6 +9,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <exception>
 #include "cuda_runtime.h"
@@ -44,7 +45,9 @@ public:
 	QPixmap getQPix();
 	QPixmap getBrightnessPix();
 	QPixmap getEdgePix();
+	void showMaximized();
 	void clear();
+	bool save(std::string);
 	std::string getSizeStr();
 	std::string getDimensionStr();
 	detectStat_t detectEdges(int threshold, int brightness);

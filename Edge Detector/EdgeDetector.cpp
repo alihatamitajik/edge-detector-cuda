@@ -45,6 +45,12 @@ QPixmap EdgeDetector::getEdgePix() {
 	));
 }
 
+void EdgeDetector::showMaximized() {
+	cv::Mat result = cv::Mat(size.height, size.width, CV_MAKETYPE(CV_8U, 1), edges);
+	cv::namedWindow("Edges", cv::WINDOW_NORMAL);
+	cv::imshow("Edges" , result);
+}
+
 void EdgeDetector::clear() {
 	if (img.data != input) {
 		free(input);
@@ -52,6 +58,13 @@ void EdgeDetector::clear() {
 	img.release();
 	free(bright);
 	free(edges);
+}
+
+bool EdgeDetector::save(std::string path) {
+	cv::Mat result = cv::Mat(size.height, size.width, CV_MAKETYPE(CV_8U, 1), edges);
+	bool res = imwrite(path, result);
+	result.release();
+	return res;
 }
 
 std::string EdgeDetector::getDimensionStr() {

@@ -227,11 +227,11 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
     checkGpuError(cudaMemcpyAsync(bright, dev_input, imageSize, cudaMemcpyDeviceToHost));
 
 
-    /*checkGpuError(naiveSobel(dev_input, dev_edge, width, height, threshold));*/
+    checkGpuError(naiveSobel(dev_input, dev_edge, width, height, threshold));
 
-    sobelOptimizedCUDA <<<grid, block>>> (dev_input, dev_edge, width, height, threshold);
+    /*sobelOptimizedCUDA <<<grid, block>>> (dev_input, dev_edge, width, height, threshold);
     checkGpuError(cudaGetLastError());
-    checkGpuError(cudaDeviceSynchronize());
+    checkGpuError(cudaDeviceSynchronize());*/
 
     checkGpuError(cudaMemcpy(edge, dev_edge, imageSize, cudaMemcpyDeviceToHost));
 

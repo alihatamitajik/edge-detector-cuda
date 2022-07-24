@@ -363,28 +363,13 @@
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionView"/>
     <addaction name="actionSave"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuView">
-    <property name="title">
-     <string>View</string>
-    </property>
-    <addaction name="actionMaximize"/>
-    <addaction name="actionNormal"/>
-   </widget>
-   <widget class="QMenu" name="menuSettings">
-    <property name="title">
-     <string>Settings</string>
-    </property>
-    <addaction name="actionAAB"/>
-    <addaction name="actionADE"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuView"/>
-   <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
@@ -452,7 +437,7 @@
      <selectedon>:/new/prefix1/Resources/gear-solid.svg</selectedon>:/new/prefix1/Resources/square-regular.svg</iconset>
    </property>
    <property name="text">
-    <string>Auto Adjust Brightness</string>
+    <string>AutoDetect</string>
    </property>
   </action>
   <action name="actionADE">
@@ -466,6 +451,15 @@
    </property>
    <property name="text">
     <string>Auto Detect Edges</string>
+   </property>
+  </action>
+  <action name="actionView">
+   <property name="icon">
+    <iconset resource="Resource.qrc">
+     <normaloff>:/new/prefix1/Resources/maximize-solid.svg</normaloff>:/new/prefix1/Resources/maximize-solid.svg</iconset>
+   </property>
+   <property name="text">
+    <string>View Edges Maximized</string>
    </property>
   </action>
  </widget>

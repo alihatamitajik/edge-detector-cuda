@@ -14,7 +14,11 @@ public:
 	~Panel();
 
 public slots:
-	void openHandler();
+	void handleOpen();
+	void showEdgesMaximized();
+	void handleClose();
+	void handleSave();
+	void handleExit();
 	void setThresholdValue(int);
 	void setBrightnessValue(int);
 	void compute();
@@ -24,11 +28,9 @@ private:
 	EdgeDetector detector;
 	bool isOpened;
 	bool isProcessed;
-	bool recentSaved;
+	bool isRecentlySaved;
 
 
 	void resetSliders();
 	void openFileChooser();
-	void disableAll();
-	void enableAll();
 };
