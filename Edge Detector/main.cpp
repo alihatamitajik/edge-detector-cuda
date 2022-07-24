@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-// Uncomment For Debug Console
+ //Uncomment For Debug Console
 //#ifdef _WIN32
 //    if (AttachConsole(ATTACH_PARENT_PROCESS) || AllocConsole()) {
 //        freopen("CONOUT$", "w", stdout);
@@ -15,6 +15,9 @@ int main(int argc, char *argv[])
 //    }
 //#endif
     QApplication app(argc, argv);
+    app.setWindowIcon(QIcon("./Resources/fav.ico"));
+    QCoreApplication::setApplicationName("Sobel");
+    QCoreApplication::setApplicationVersion("0.1.0");
     Panel p;
     p.show();
     return app.exec();

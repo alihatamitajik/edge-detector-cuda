@@ -282,7 +282,7 @@
                 <item>
                  <widget class="QLabel" name="memAlloc">
                   <property name="text">
-                   <string>Mem Alloc: </string>
+                   <string>Memory Time: </string>
                   </property>
                  </widget>
                 </item>

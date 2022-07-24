@@ -16,6 +16,7 @@ Panel::Panel(QWidget *parent)
 	detector = EdgeDetector();
 	setFixedSize(1280, 720);
 	ui.setupUi(this);
+	setWindowTitle("Sobel");
 	connect(ui.actionOpen, SIGNAL(triggered()), this, SLOT(handleOpen()));
 	connect(ui.brightnessSlider, SIGNAL(valueChanged(int)), this, SLOT(setBrightnessValue(int)));
 	connect(ui.thresholdSlider, SIGNAL(valueChanged(int)), this, SLOT(setThresholdValue(int)));
@@ -65,9 +66,7 @@ void Panel::handleClose() {
 	}
 	isOpened = false;
 	isProcessed = false;
-	ui.input->clear();
-	ui.modified->clear();
-	ui.edges->clear();
+	resetLabels();
 	resetSliders();
 	ui.settingBox->setEnabled(false);
 }
@@ -137,6 +136,18 @@ void Panel::openFileChooser() {
 	else {
 		// Do Nothing
 	}
+}
+
+void Panel::resetLabels()
+{
+	ui.input->clear();
+	ui.modified->clear();
+	ui.edges->clear();
+	ui.imageSize->setText("Size: ");
+	ui.imageDim->setText("Dim: ");
+	ui.memAlloc->setText("Memory Time: ");
+	ui.brightness->setText("Brightness: ");
+	ui.edgeDetection->setText("Edge Detection: ");
 }
 
 void Panel::setBrightnessValue(int value) {

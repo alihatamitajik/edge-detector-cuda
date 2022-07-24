@@ -8,5 +8,6 @@
         <file>Resources/folder-open-regular.svg</file>
         <file>Resources/maximize-solid.svg</file>
         <file>Resources/square-regular.svg</file>
+        <file>Resources/fav.ico</file>
     </qresource>
 </RCC>

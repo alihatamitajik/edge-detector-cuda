@@ -33,4 +33,5 @@ private:
 
 	void resetSliders();
 	void openFileChooser();
+	void resetLabels();
 };
