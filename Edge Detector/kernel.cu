@@ -235,7 +235,8 @@ __global__ void sobelOptimizedShCUDA(const uint8_t* image, uint8_t* output,
 }
 
 __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t * edge,
-    int width, int height, int brightness, int threshold)
+    int width, int height, int brightness, int threshold, 
+    float* mem_ms, float* bright_ms, float* detecct_ms)
 {
     cudaError_t cudaStatus;
     uint8_t* dev_input;
@@ -245,7 +246,17 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
     dim3 grid(width/BLOCK_DIM + (width%BLOCK_DIM!=0), 
         height/BLOCK_DIM + (width % BLOCK_DIM != 0));
 
+    float ms;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+
+    cudaStream_t main, mem;
+    cudaStreamCreate(&main);
+    cudaStreamCreate(&mem);
+
     // Choose which GPU to run on, change this on a multi-GPU system.
+    cudaEventRecord(start);
     checkGpuError(cudaSetDevice(0));
 
     checkGpuError(cudaMalloc((void**)&dev_input, imageSize));
@@ -253,22 +264,30 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
     checkGpuError(cudaMalloc((void**)&dev_edge, imageSize));
 
     checkGpuError(cudaMemcpy(dev_input, input, imageSize, cudaMemcpyHostToDevice));
+    cudaEventRecord(stop);
 
+    cudaEventElapsedTime(mem_ms, start, stop);
+    printf("Memory Launch = %f\n", *mem_ms);
 
-    changeBrightnessCUDA <<<grid, block>>> (dev_input, width, height, brightness);
+    cudaEventRecord(start);
+    changeBrightnessCUDA <<<grid, block, 0, main>>> (dev_input, width, height, brightness);
+    cudaEventRecord(stop);
     checkGpuError(cudaGetLastError());
     checkGpuError(cudaDeviceSynchronize());
 
+    cudaEventElapsedTime(bright_ms, start, stop);
 
-    checkGpuError(cudaMemcpyAsync(bright, dev_input, imageSize, cudaMemcpyDeviceToHost));
+    checkGpuError(cudaMemcpyAsync(bright, dev_input, imageSize, cudaMemcpyDeviceToHost, mem));
 
-
-    //checkGpuError(naiveSobel(dev_input, dev_edge, width, height, threshold));
-
-    sobelOptimizedShCUDA <<<grid, block>>> (dev_input, dev_edge, width, height, threshold);
+    cudaEventRecord(start);
+    sobelOptimizedShCUDA <<<grid, block, 0, main>>> (dev_input, dev_edge, width, height, threshold);
+    cudaEventRecord(stop);
     checkGpuError(cudaGetLastError());
     checkGpuError(cudaDeviceSynchronize());
 
+    cudaEventElapsedTime(detecct_ms, start, stop);
+    printf("Kernel Launch = %f\n", *detecct_ms);
+        
     checkGpuError(cudaMemcpy(edge, dev_edge, imageSize, cudaMemcpyDeviceToHost));
 
 Error:

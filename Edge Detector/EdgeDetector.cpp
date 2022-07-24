@@ -100,14 +100,20 @@ detectStat_t EdgeDetector::detectEdges(int threshold, int brightness) {
 		return detectStat_t{ 0, 0, 0, DetectorErrors::BAD_BRIGHTNESS, cudaStatus};
 	}
 	else {
+		detectStat_t stat;
 		cudaStatus = launchDetectEdge(input, bright, edges, size.width, size.height,
-			brightness, threshold);
+			brightness, threshold, &stat.mallocTime, &stat.edgeTime, &stat.brightnessTime);
 
 		if (cudaStatus != cudaSuccess) {
-			return detectStat_t{ 0, 0, 0, DetectorErrors::CUDA_ERROR, cudaStatus };
+			stat.e = DetectorErrors::CUDA_ERROR;
+			stat.cudaE = cudaStatus;
+
+			return stat;
 		}
 		else {
-			return detectStat_t{ 0, 0, 0, DetectorErrors::SUCCESS, cudaStatus };
+			stat.e = DetectorErrors::SUCCESS;
+			stat.cudaE = cudaStatus;
+			return stat;
 		}
 	}
 }

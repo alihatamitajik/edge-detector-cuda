@@ -27,11 +27,11 @@ enum class DetectorErrors
  * This struct contains the statistics and results of the kernel executions. */
 typedef struct statistisc {
 	/* Memorry allocation time */
-	double mallocTime;
+	float mallocTime;
 	/* Setting Brightness Time (Execution time of changeBrightnessCUDA kernel) */
-	double brightnessTime;
+	float brightnessTime;
 	/* Detevting Edge Time (Execution time of detectEdgeCUDA (some varient of it) kernel)*/
-	double edgeTime;
+	float edgeTime;
 	/* If an error occured above fields will be 0 and e != SUCCESS */
 	DetectorErrors e;
 	/* If the error was caused by CUDA the following will contain error struct */
