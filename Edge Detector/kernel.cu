@@ -130,14 +130,41 @@ Error:
  * 
  * In this implementation, we use the properties of the algorithm (make use of 
  * zeros in the filters, Loop unrowling, using subtraction instead of "*-1" and
- * reducing kernel launches. Also we will access the memory way less with shared
- * data and also helps the bandwidth.
+ * reducing kernel launches.
  * 
  * The above strategies boosts the performance of the code!
  * 
  */
 
 __global__ void sobelOptimizedCUDA(const uint8_t* image, uint8_t* output,
+    int width, int height, int threshold)
+{
+    int i = threadIdx.y + blockIdx.y * blockDim.y;
+    int j = threadIdx.x + blockIdx.x * blockDim.x;
+    int idx = i * width + j;
+
+    float S1, S2;
+    int out;
+    if (j > 0 && i > 0 && j < width - 1 && i < height - 1) {
+        S1 = image[(i - 1) * width + (j + 1)] - image[(i - 1) * width + (j - 1)] - image[(i + 1) * width + (j - 1)] +
+             2 * (image[i * width + (j + 1)] - image[i * width + (j - 1)]) + (image[(i + 1) * width + (j + 1)]);
+
+        S2 = (image[(i - 1) * width + (j - 1)]) + (2 * image[(i - 1) * width + j]) + (image[(i - 1) * width + (j + 1)]) +
+            (-1 * image[(i + 1) * width + (j - 1)]) + (-2 * image[(i + 1) * width + j]) + (-1 * image[(i + 1) * width + (j + 1)]);
+
+
+        out = sqrtf(S1 * S1 + S2 * S2);
+        output[idx] = out > threshold ? out : 0;
+    }
+}
+
+/*
+ * Hard-Coded + Shared Memory
+ * 
+ * Also we will access the memory way less with shared data and also helps the 
+ * bandwidth. 
+ */
+__global__ void sobelOptimizedShCUDA(const uint8_t* image, uint8_t* output,
     int width, int height, int threshold)
 {
     int i = blockIdx.y * blockDim.y + threadIdx.y;
@@ -151,26 +178,26 @@ __global__ void sobelOptimizedCUDA(const uint8_t* image, uint8_t* output,
         // Main data
         sdata[threadIdx.y + 1][threadIdx.x + 1] = image[idx];
         
-        // Boudnries
+        // Fix Boudnries
         if (threadIdx.y == 0 && blockIdx.y != 0) {
             sdata[0][threadIdx.x + 1] = image[(i - 1) * width + j];
             if (threadIdx.x == 0 && blockIdx.x != 0) {
                 sdata[0][0] = image[(i - 1) * width + (j-1)];
             }
         }
-        else if (threadIdx.x == 0 && blockIdx.x != 0) {
+        if (threadIdx.x == 0 && blockIdx.x != 0) {
             sdata[threadIdx.y + 1][0] = image[(i) * width + j - 1];
             if (threadIdx.y == 31 && i != height - 1) {
                 sdata[33][0] = image[(i + 1) * width + j - 1];
             }
         }
-        else if (threadIdx.y == 31 && i != height - 1) {
+        if (threadIdx.y == 31 && i != height - 1) {
             sdata[33][threadIdx.x + 1] = image[((i + 1) * width + j)];
             if (threadIdx.x == 31 && j != width - 1) {
                 sdata[33][33] = image[(i + 1) * width + j + 1];
             }
         }
-        else if (threadIdx.x == 31 && j != width - 1) {
+        if (threadIdx.x == 31 && j != width - 1) {
             sdata[threadIdx.y + 1][33] = image[i * width + j + 1];
             if (threadIdx.y == 0 && blockIdx.y != 0) {
                 sdata[0][33] = image[(i - 1) * width + j + 1];
@@ -196,7 +223,6 @@ __global__ void sobelOptimizedCUDA(const uint8_t* image, uint8_t* output,
         output[idx] = out > threshold ? out : 0;
     }
 }
-
 
 __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t * edge,
     int width, int height, int brightness, int threshold)
@@ -227,11 +253,11 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
     checkGpuError(cudaMemcpyAsync(bright, dev_input, imageSize, cudaMemcpyDeviceToHost));
 
 
-    checkGpuError(naiveSobel(dev_input, dev_edge, width, height, threshold));
+    //checkGpuError(naiveSobel(dev_input, dev_edge, width, height, threshold));
 
-    /*sobelOptimizedCUDA <<<grid, block>>> (dev_input, dev_edge, width, height, threshold);
+    sobelOptimizedShCUDA <<<grid, block>>> (dev_input, dev_edge, width, height, threshold);
     checkGpuError(cudaGetLastError());
-    checkGpuError(cudaDeviceSynchronize());*/
+    checkGpuError(cudaDeviceSynchronize());
 
     checkGpuError(cudaMemcpy(edge, dev_edge, imageSize, cudaMemcpyDeviceToHost));
 
