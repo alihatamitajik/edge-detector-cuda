@@ -1,4 +1,5 @@
 #include "edge.cuh"
+#include <chrono>
 
 constexpr auto BLOCK_SIZE = 1024;
 constexpr auto BLOCK_DIM = 32;
@@ -22,14 +23,12 @@ __global__ void changeBrightnessCUDA(uint8_t* input, const int width,
         val = input[idx] + brightness;
         // Truncate the result (0..255)
         if (val > 255) {
-            input[idx] = 255;
+            val = 255;
         }
         else if (val < 0) {
-            input[idx] = 0;
+            val = 0;
         }
-        else {
-            input[idx] = val;
-        }
+        input[idx] = val;
     }
 }
 
@@ -256,18 +255,15 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
     cudaStreamCreate(&mem);
 
     // Choose which GPU to run on, change this on a multi-GPU system.
-    cudaEventRecord(start);
-    checkGpuError(cudaSetDevice(0));
 
-    checkGpuError(cudaMalloc((void**)&dev_input, imageSize));
+    auto startT = std::chrono::high_resolution_clock::now();
+    cudaMalloc((void**)&dev_input, imageSize);
+    cudaMalloc((void**)&dev_edge, imageSize);
+    cudaMemcpy(dev_input, input, imageSize, cudaMemcpyHostToDevice);
+    auto endT = std::chrono::high_resolution_clock::now();
 
-    checkGpuError(cudaMalloc((void**)&dev_edge, imageSize));
-
-    checkGpuError(cudaMemcpy(dev_input, input, imageSize, cudaMemcpyHostToDevice));
-    cudaEventRecord(stop);
-
-    cudaEventElapsedTime(mem_ms, start, stop);
-    printf("Memory Launch = %f\n", *mem_ms);
+    std::chrono::duration<double, std::milli> float_ms = endT - startT;
+    *mem_ms = float_ms.count();
 
     cudaEventRecord(start);
     changeBrightnessCUDA <<<grid, block, 0, main>>> (dev_input, width, height, brightness);
@@ -293,5 +289,9 @@ __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t
 Error:
     cudaFree(dev_input);
     cudaFree(dev_edge);
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    cudaStreamDestroy(main);
+    cudaStreamDestroy(mem);
     return cudaStatus;
 }

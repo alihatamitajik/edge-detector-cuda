@@ -3,7 +3,7 @@
 #include <QMainWindow>
 #include "ui_panel.h"
 #include "EdgeDetector.h"
-
+#include <QCloseEvent>
 
 class Panel : public QMainWindow
 {
@@ -12,6 +12,7 @@ class Panel : public QMainWindow
 public:
 	Panel(QWidget *parent = nullptr);
 	~Panel();
+	void closeEvent(QCloseEvent* event);
 
 public slots:
 	void handleOpen();

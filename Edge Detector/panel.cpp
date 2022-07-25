@@ -1,9 +1,12 @@
 #include "panel.h"
 #include <QFileDialog>
 #include <QMessageBox>
+#include "imageviewer.h"
+#include <QCloseEvent>
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>
+#include <time.h>
 
 void setLabelPictureScaled(QLabel*, QPixmap);
 
@@ -41,7 +44,9 @@ void Panel::handleOpen() {
 
 void Panel::showEdgesMaximized() {
 	if (isProcessed) {
-		detector.showMaximized();
+		ImageViewer* iv = new ImageViewer(this);
+		iv->setImage(detector.getEdgePix());
+		iv->show();
 	}
 }
 
@@ -69,6 +74,12 @@ void Panel::handleClose() {
 	resetLabels();
 	resetSliders();
 	ui.settingBox->setEnabled(false);
+}
+
+void Panel::closeEvent(QCloseEvent* event)
+{
+	handleClose();
+	QWidget::closeEvent(event);
 }
 
 void Panel::handleSave() {
@@ -181,6 +192,11 @@ void Panel::compute() {
 		// set brightness image
 		setLabelPictureScaled(ui.modified, detector.getBrightnessPix());
 		setLabelPictureScaled(ui.edges, detector.getEdgePix());
+
+		// Performance Results
+		ui.brightness->setText(QString::fromStdString(fmt::format("Brightness: {:.2f}ms", stat.brightnessTime)));
+		ui.edgeDetection->setText(QString::fromStdString(fmt::format("Edge Detection: {:.2f}ms", stat.edgeTime)));
+		ui.memAlloc->setText(QString::fromStdString(fmt::format("Memory Time: {:.2f}ms", stat.mallocTime)));
 	}
 	ui.statusBar->clearMessage();
 }

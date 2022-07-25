@@ -102,6 +102,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EdgeDetector.cpp" />
+    <ClCompile Include="imageviewer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="panel.cpp" />
     <QtRcc Include="Resource.qrc" />
@@ -109,12 +110,14 @@
   <ItemGroup>
     <ClInclude Include="edge.cuh" />
     <ClInclude Include="EdgeDetector.h" />
+    <QtMoc Include="imageviewer.h" />
     <QtMoc Include="panel.h" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
   </ItemGroup>
   <ItemGroup>
+    <QtUic Include="imageviewer.ui" />
     <QtUic Include="panel.ui" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

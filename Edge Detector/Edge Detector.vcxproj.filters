@@ -4,6 +4,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="panel.cpp" />
     <ClCompile Include="EdgeDetector.cpp" />
+    <ClCompile Include="imageviewer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="Resource.qrc" />
@@ -17,8 +18,10 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="panel.h" />
+    <QtMoc Include="imageviewer.h" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="panel.ui" />
+    <QtUic Include="imageviewer.ui" />
   </ItemGroup>
 </Project>
