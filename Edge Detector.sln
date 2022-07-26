@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.32002.261
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Edge Detector", "Edge Detector\Edge Detector.vcxproj", "{1B71F85F-426F-4120-A915-B46C9821E75A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Benchmark", "Benchmark\Benchmark.vcxproj", "{AADA2FE0-E14F-451E-AA16-FF58183D62B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{1B71F85F-426F-4120-A915-B46C9821E75A}.Debug|x64.Build.0 = Debug|x64
 		{1B71F85F-426F-4120-A915-B46C9821E75A}.Release|x64.ActiveCfg = Release|x64
 		{1B71F85F-426F-4120-A915-B46C9821E75A}.Release|x64.Build.0 = Release|x64
+		{AADA2FE0-E14F-451E-AA16-FF58183D62B4}.Debug|x64.ActiveCfg = Debug|x64
+		{AADA2FE0-E14F-451E-AA16-FF58183D62B4}.Debug|x64.Build.0 = Debug|x64
+		{AADA2FE0-E14F-451E-AA16-FF58183D62B4}.Release|x64.ActiveCfg = Release|x64
+		{AADA2FE0-E14F-451E-AA16-FF58183D62B4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

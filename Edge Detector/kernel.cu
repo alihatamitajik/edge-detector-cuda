@@ -147,10 +147,15 @@ __global__ void sobelOptimizedCUDA(const uint8_t* image, uint8_t* output,
     int out;
     if (j > 0 && i > 0 && j < width - 1 && i < height - 1) {
         S1 = image[(i - 1) * width + (j + 1)] - image[(i - 1) * width + (j - 1)] - image[(i + 1) * width + (j - 1)] +
-             2 * (image[i * width + (j + 1)] - image[i * width + (j - 1)]) + (image[(i + 1) * width + (j + 1)]);
+             2 * (image[i * width + (j + 1)] - image[i * width + (j - 1)]) + image[(i + 1) * width + (j + 1)];
 
-        S2 = (image[(i - 1) * width + (j - 1)]) + (2 * image[(i - 1) * width + j]) + (image[(i - 1) * width + (j + 1)]) +
-            (-1 * image[(i + 1) * width + (j - 1)]) + (-2 * image[(i + 1) * width + j]) + (-1 * image[(i + 1) * width + (j + 1)]);
+        S2 = image[(i - 1) * width + (j - 1)] 
+            + 2 * ( 
+                image[(i - 1) * width + j] 
+                - image[(i + 1) * width + j]
+            ) + (image[(i - 1) * width + (j + 1)])
+            - image[(i + 1) * width + (j - 1)]
+            - image[(i + 1) * width + (j + 1)];
 
 
         out = sqrtf(S1 * S1 + S2 * S2);
