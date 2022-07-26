@@ -73,6 +73,7 @@ __global__ void sobelCUDA(const uint8_t* image,
         }
 
         out = sqrtf(S1 * S1 + S2 * S2);
+        out = out > 255 ? 255 : out;
         output[idx] = out > threshold ? out : 0;
     }
 }
@@ -119,8 +120,8 @@ cudaError_t naiveSobel(uint8_t* dev_input, uint8_t* dev_edge,
     checkGpuError(cudaDeviceSynchronize());
 
 Error:
-    cudaFree(xKernel);
-    cudaFree(yKernel);
+    cudaFree(dev_xK);
+    cudaFree(dev_yK);
     return cudaStatus;
 }
 
@@ -153,15 +154,16 @@ __global__ void sobelOptimizedCUDA(const uint8_t* image, uint8_t* output,
 
 
         out = sqrtf(S1 * S1 + S2 * S2);
+        out = out > 255 ? 255 : out;
         output[idx] = out > threshold ? out : 0;
     }
 }
 
 /*
  * Hard-Coded + Shared Memory
- * 
- * Also we will access the memory way less with shared data and also helps the 
- * bandwidth. 
+ *
+ * Also we will access the memory way less with shared data and also helps the
+ * bandwidth.
  */
 __global__ void sobelOptimizedShCUDA(const uint8_t* image, uint8_t* output,
     int width, int height, int threshold)
@@ -169,69 +171,64 @@ __global__ void sobelOptimizedShCUDA(const uint8_t* image, uint8_t* output,
     int i = blockIdx.y * blockDim.y + threadIdx.y;
     int j = blockIdx.x * blockDim.x + threadIdx.x;
     int idx = i * width + j;
+    int x = threadIdx.x;
+    int y = threadIdx.y;
+    int y34 = y * 34;
     int out;
     float S1, S2;
 
-    __shared__ uint8_t sdata[34][34];
+    __shared__ uint8_t sdata[34 * 34];
     if (i < height && j < width) {
         // Main data
-        sdata[threadIdx.y + 1][threadIdx.x + 1] = image[idx];
-        
+        sdata[(y + 1) * 34 + x + 1] = image[idx];
+
         // Fix Boudnries
-        if (threadIdx.y == 0 && blockIdx.y != 0) {
-            sdata[0][threadIdx.x + 1] = image[(i - 1) * width + j];
-            if (threadIdx.x == 0 && blockIdx.x != 0) {
-                sdata[0][0] = image[(i - 1) * width + (j-1)];
+        if (y == 0 && blockIdx.y != 0) {
+            sdata[x + 1] = image[(i - 1) * width + j];
+            if (x == 0 && blockIdx.x != 0) {
+                sdata[0] = image[(i - 1) * width + (j - 1)];
             }
         }
-        if (threadIdx.x == 0 && blockIdx.x != 0) {
-            sdata[threadIdx.y + 1][0] = image[(i) * width + j - 1];
-            if (threadIdx.y == 31 && i != height - 1) {
-                sdata[33][0] = image[(i + 1) * width + j - 1];
+        if (x == 0 && blockIdx.x != 0) {
+            sdata[y34 + 34] = image[(i)*width + j - 1];
+            if (y == 31 && i != height - 1) {
+                sdata[33 * 34] = image[(i + 1) * width + j - 1];
             }
         }
-        if (threadIdx.y == 31 && i != height - 1) {
-            sdata[33][threadIdx.x + 1] = image[((i + 1) * width + j)];
-            if (threadIdx.x == 31 && j != width - 1) {
-                sdata[33][33] = image[(i + 1) * width + j + 1];
+        if (y == 31 && i != height - 1) {
+            sdata[33 * 34 + x + 1] = image[((i + 1) * width + j)];
+            if (x == 31 && j != width - 1) {
+                sdata[33 * 34 + 33] = image[(i + 1) * width + j + 1];
             }
         }
-        if (threadIdx.x == 31 && j != width - 1) {
-            sdata[threadIdx.y + 1][33] = image[i * width + j + 1];
-            if (threadIdx.y == 0 && blockIdx.y != 0) {
-                sdata[0][33] = image[(i - 1) * width + j + 1];
+        if (x == 31 && j != width - 1) {
+            sdata[y34 + 34 + 33] = image[i * width + j + 1];
+            if (y == 0 && blockIdx.y != 0) {
+                sdata[33] = image[(i - 1) * width + j + 1];
             }
         }
     }
+
     // waits untill shared data is completed
     __syncthreads();
 
-    if (idx == 0) {
-        for (int ii = 0; ii < 33; ii++) {
-            for (int jj = 0; jj < 33; jj++) {
-                if (sdata[ii + 1][jj + 1] != image[ii * width + jj]) {
-                    printf("%d, %d::%d, %d\n", blockIdx.x, blockIdx.y, ii, jj);
-                }
-            }
-        }
-    }
-
     if (i >= 1 && j >= 1 &&
         i < height - 1 && j < width - 1)
-    { 
-        S1 = sdata[threadIdx.y][threadIdx.x + 2] - sdata[threadIdx.y][threadIdx.x]
-            + 2 * (sdata[threadIdx.y + 1][threadIdx.x + 2] - sdata[threadIdx.y + 1][threadIdx.x])
-            + sdata[threadIdx.y + 2][threadIdx.x + 2] - sdata[threadIdx.y + 2][threadIdx.x];
+    {
+        S1 = sdata[y34 + x + 2] - sdata[y * 34 + x]
+            + 2 * (sdata[y34 + 34 + x + 2] - sdata[(y + 1) * 34 + x])
+            + sdata[y34 + 68 + x + 2] - sdata[y34 + 68 + x];
 
-        S2 = sdata[threadIdx.y + 2][threadIdx.x + 2] + sdata[threadIdx.y + 2][threadIdx.x] 
-            + 2 * (sdata[threadIdx.y + 2][threadIdx.x + 1] - sdata[threadIdx.y][threadIdx.x + 1])
-            - sdata[threadIdx.y][threadIdx.x + 2] - sdata[threadIdx.y][threadIdx.x];
-
+        S2 = sdata[y34 + x + 70] + sdata[y34 + 68 + x]
+            + 2 * (sdata[y34 + 69 + x] - sdata[y34 + x + 1])
+            - sdata[y34 + x + 2] - sdata[y34 + x];
 
         out = sqrtf(S1 * S1 + S2 * S2);
+        out = out > 255 ? 255 : out;
         output[idx] = out > threshold ? out : 0;
     }
 }
+
 
 __host__ cudaError_t launchDetectEdge(uint8_t * input, uint8_t * bright, uint8_t * edge,
     int width, int height, int brightness, int threshold, 
