@@ -55,6 +55,6 @@ Ali Hatami - [@alihatamitajik](https://twitter.com/alihatamitajik) - a\[DOT\]hat
 [VS]: https://img.shields.io/badge/%20-Visual%20Studio-blue?style=for-the-badge&logo=Visual%20Studio
 [VS19C]: https://visualstudio.microsoft.com/vs/older-downloads/
 [Qt]: https://img.shields.io/badge/UI-Qt-green?style=for-the-badge&logo=Qt
-[Qt-url]: qt.io
+[Qt-url]: https://qt.io
 [OCV]: https://img.shields.io/badge/Image%20Framework-OpenCV-lightgreen?style=for-the-badge&logo=OpenCV
-[ocv-url]: opencv.org
+[ocv-url]: https://opencv.org
